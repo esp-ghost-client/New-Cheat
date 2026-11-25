@@ -18,6 +18,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Find project folder
+        id: find
+        run: |
+          echo "--- repo layout ---"
+          find . -maxdepth 4 -not -path './.git/*' | head -80
+          DIR=$(find . -type d -name "${{ matrix.dir }}" -not -path './.git/*' | head -n1)
+          if [ -z "$DIR" ]; then
+            echo "Folder ${{ matrix.dir }} not found in repo"
+            exit 1
+          fi
+          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -28,12 +40,12 @@ jobs:
           gradle-version: ${{ matrix.gradle }}
 
       - name: Build
-        working-directory: ${{ matrix.dir }}
+        working-directory: ${{ steps.find.outputs.dir }}
         run: gradle build --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
           name: AmethystXray-${{ matrix.dir }}
           path: |
-            ${{ matrix.dir }}/build/libs/*.jar
-            !${{ matrix.dir }}/build/libs/*-sources.jar
+            ${{ steps.find.outputs.dir }}/build/libs/*.jar
+            !${{ steps.find.outputs.dir }}/build/libs/*-sources.jar
