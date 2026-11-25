@@ -18,16 +18,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Unzip source if needed
+        run: |
+          if [ -f AmethystXray-Source.zip ]; then
+            unzip -oq AmethystXray-Source.zip -d extracted
+          fi
+
       - name: Find project folder
         id: find
         run: |
-          echo "--- repo layout ---"
-          find . -maxdepth 4 -not -path './.git/*' | head -80
           DIR=$(find . -type d -name "${{ matrix.dir }}" -not -path './.git/*' | head -n1)
           if [ -z "$DIR" ]; then
             echo "Folder ${{ matrix.dir }} not found in repo"
+            find . -maxdepth 4 -not -path './.git/*' | head -80
             exit 1
           fi
+          echo "Using $DIR"
           echo "dir=$DIR" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-java@v4
