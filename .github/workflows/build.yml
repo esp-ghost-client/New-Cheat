@@ -20,9 +20,11 @@ jobs:
 
       - name: Unzip source if needed
         run: |
-          if [ -f AmethystXray-Source.zip ]; then
-            unzip -oq AmethystXray-Source.zip -d extracted
-          fi
+          shopt -s nullglob
+          for z in *.zip; do
+            echo "Unzipping $z"
+            unzip -oq "$z" -d "extracted_$(basename "$z" .zip | tr ' ()' '___')"
+          done
 
       - name: Find project folder
         id: find
