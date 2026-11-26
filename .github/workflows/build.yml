@@ -29,6 +29,30 @@ jobs:
             unzip -oq "$Z" -d extracted
           fi
 
+      - name: Patch drawBorder (1.21.11 compatibility)
+        run: |
+          python3 - <<'PY'
+          import glob
+          helper = '''    private static void border(DrawContext g, int x, int y, int w, int h, int color) {
+              g.fill(x, y, x + w, y + 1, color);
+              g.fill(x, y + h - 1, x + w, y + h, color);
+              g.fill(x, y + 1, x + 1, y + h - 1, color);
+              g.fill(x + w - 1, y + 1, x + w, y + h - 1, color);
+          }
+
+          '''
+          for p in glob.glob('**/AxrScreen.java', recursive=True):
+              s = open(p).read()
+              if 'g.drawBorder(' not in s:
+                  continue
+              s = s.replace('g.drawBorder(', 'border(g, ')
+              marker = '    private void diamond(DrawContext g'
+              if 'private static void border(' not in s and marker in s:
+                  s = s.replace(marker, helper + marker, 1)
+              open(p, 'w').write(s)
+              print('patched', p)
+          PY
+
       - name: Find project folder
         id: find
         run: |
