@@ -17,14 +17,17 @@ jobs:
             gradle: '9.2.1'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Unzip source if needed
+      - name: Unzip newest source zip
         run: |
           shopt -s nullglob
-          for z in *.zip; do
-            echo "Unzipping $z"
-            unzip -oq "$z" -d "extracted_$(basename "$z" .zip | tr ' ()' '___')"
-          done
+          Z=$(for f in *.zip; do echo "$(git log -1 --format=%ct -- "$f") $f"; done | sort -n | tail -n1 | cut -d' ' -f2-)
+          if [ -n "$Z" ]; then
+            echo "Using zip: $Z"
+            unzip -oq "$Z" -d extracted
+          fi
 
       - name: Find project folder
         id: find
